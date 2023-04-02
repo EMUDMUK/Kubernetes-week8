@@ -6,29 +6,35 @@ pipeline {
         kind: Pod
         spec:
           containers:
-          - name: centos
-            image: centos
+          - name: kubectl
+            image: joshendriks/alpine-k8s
             command:
-            - sleep
-            args:
-            - 99d
-            restartPolicy: Never
+            - /bin/cat
+            tty: true  
         '''
     }
   }
- {
-   node(POD_LABEL) {
-     stage('k8s') {
-        git 'https://github.com/dlambrig/Continuous-Delivery-with-Docker-and-Jenkins-Second-Edition.git'
-         container('centos') {
-          stage('start calculator') {
-            sh '''
-            curl -ik -H "Authorization: Bearer $(cat
-    /var/run/secrets/kubernetes.io/serviceaccount/token)"
-    https://$KUBERNETES_SERVICE_HOST:$KUBERNETES_SERVICE_PORT/api/v1/namespaces/default/pods
-'''
-}
-}
-}
+  stages {
+    stage('Deploy App to Kubernetes') {     
+      steps {
+        container('kubectl') {
+          withCredentials([file(credentialsId: 'mykubeconfig', variable: 'KUBECONFIG')]) {
+            sh 'kubectl cluster-info'
+            sh 'kubectl apply -f hazelcast.yaml'
+            sh 'kubectl apply -f calculator.yaml'
+          }
+        }
+      }
+      stage('Testing Service Sum') {     
+      steps {
+        container('kubectl') {
+          withCredentials([file(credentialsId: 'mykubeconfig', variable: 'KUBECONFIG')]) {
+            sh 'NODE_IP=$(kubectl get service/calculator-service -o jsonpath='{.spec.clusterIP}')'
+            sh 'NODE_PORT=$(kubectl get svc calculator-service -o=jsonpath='{.spec.ports[0].port}')'
+            sh 'curl http://${NODE_IP}:${NODE_PORT}/sum?a=1\&b=2'
+          }
+        }
+      }
+  }
 }
 }
