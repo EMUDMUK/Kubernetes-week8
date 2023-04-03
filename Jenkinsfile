@@ -22,6 +22,7 @@ curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stabl
 chmod +x ./kubectl
 ./kubectl apply -f calculator.yaml
 ./kubectl apply -f hazelcast.yaml
+'''
 }
 }
 }
