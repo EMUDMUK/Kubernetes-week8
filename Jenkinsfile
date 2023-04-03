@@ -13,8 +13,7 @@ restartPolicy: Never
 ''') {
 node(POD_LABEL) {
 stage('gradle') {
-git
-'https://github.com/dlambrig/Continuous-Delivery-with-Docker-and-Jenkins-Second-Edition.git'
+git 'https://github.com/dlambrig/Continuous-Delivery-with-Docker-and-Jenkins-Second-Edition.git'
 container('gradle') {
 stage('test calculator') {
 sh '''
